@@ -101,7 +101,7 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 DATABASES = {
 	        'default': {
 	            'ENGINE': 'django.db.backends.mysql',
-	            'NAME': 'db_openai',
+	            'NAME': 'db_chatbot_iconcreta',
 	            'USER': 'claud',
 	            'PASSWORD': 'admin',
 	            'HOST': 'localhost',

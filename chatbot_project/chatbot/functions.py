@@ -48,14 +48,14 @@ def leer_archivo_configuracion(url_cliente=None, proyecto=None, ruta_archivo=Non
     return configuracion
 
 # Función para enviar correo electrónico a Iconcreta tras realizar una cotización y que pueda ser procesada para ser subida al CRM
-def enviar_correo_iconcreta(name, comuna_corregida, email, telefono, convertir_rango_precio_a_texto, tipo_inmueble, dormitorios, banos, url_cliente, proyecto):
+def enviar_correo_iconcreta(name, email, telefono, convertir_rango_precio_a_texto, tipo_inmueble, dormitorios, banos, url_cliente, proyecto):
     # Seleccionar el archivo de configuración basado en la URL del cliente y el proyecto
     ruta_archivo_configuracion = seleccionar_ruta_configuracion(url_cliente, proyecto)
     parametros_archivo_configuracion = leer_archivo_configuracion(ruta_archivo=ruta_archivo_configuracion)  # Pasar ruta_archivo_configuracion como ruta_archivo
     proyecto_correo = parametros_archivo_configuracion.get('PROYECTO_CORREO', 'Valor por defecto si no se encuentra PROYECTO_CORREO')
 
     sg = SendGridAPIClient(settings.EMAIL_HOST_PASSWORD)
-    from_email = settings.DEFAULT_FROM_EMAIL
+    from_email = parametros_archivo_configuracion.get('DEFAULT_FROM_EMAIL')
     to_email = parametros_archivo_configuracion.get('EMAIL_RECIPIENT')
     subject = parametros_archivo_configuracion.get('EMAIL_SUBJECT')
 
@@ -71,7 +71,7 @@ def enviar_correo_iconcreta(name, comuna_corregida, email, telefono, convertir_r
     # Formato del mensaje de comentarios
     comentario = f'La persona cotizó {articulo} {tipo_inmueble} del proyecto {proyecto_correo}, con {dormitorios} {pluralizar_dormitorio} y {banos} {pluralizar_bano} a un precio {modificar_texto_precio}.'
 
-    content = f'ORIGEN: ChatBot\nPROYECTO: {proyecto_correo}\nNOMBRE Y APELLIDO: {name}\nCOMUNA: {comuna_corregida}\nEMAIL: {email}\nTELEFONO: {telefono}\nPRECIO: {convertir_rango_precio_a_texto}\nCOMENTARIO: {comentario}'
+    content = f'ORIGEN: ChatBot\nPROYECTO: {proyecto_correo}\nNOMBRE Y APELLIDO: {name}\nEMAIL: {email}\nTELEFONO: {telefono}\nPRECIO: {convertir_rango_precio_a_texto}\nCOMENTARIO: {comentario}'
 
     message = Mail(from_email=from_email, to_emails=to_email, subject=subject, plain_text_content=content)
     try:
@@ -164,18 +164,3 @@ def obtener_producto_mas_barato(productos):
 def quitar_acentos(texto):
     texto_sin_acentos = ''.join((c for c in unicodedata.normalize('NFD', texto) if unicodedata.category(c) != 'Mn'))
     return texto_sin_acentos
-
-# Función para capitalizar cada palabra en el nombre de la comuna
-def capitalizar_comuna(comuna):
-    return ' '.join(palabra.capitalize() for palabra in comuna.split())
-
-# Función para cargar las comunas de Chile provenientes del diccionario
-def cargar_comunas():
-    # Ruta al archivo comunas.jsonl
-    jsonl_path = os.path.join(settings.BASE_DIR, 'chatbot/comunas.jsonl')
-    comunas = {}
-    with open(jsonl_path, 'r', encoding='utf-8') as file:  
-        for line in file:
-            comuna = json.loads(line)
-            comunas[comuna["Comuna Oficial"]] = True
-    return comunas

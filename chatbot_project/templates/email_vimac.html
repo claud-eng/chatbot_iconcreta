@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        html, body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: white;
+        }
+
+        table {
+            width: 100%;
+            height: 100%;
+            border-spacing: 0;
+            border: none;
+        }
+
+        td {
+            vertical-align: top;
+        }
+
+        .body-section td {
+            background-color: white;
+        }
+
+        .container {
+            background-color: white;
+            width: 600px;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .producto {
+            margin-bottom: 20px;
+            border-bottom: 1px solid white;
+            padding-bottom: 10px;
+            color: #426161;
+            font-weight: bold;
+        }
+
+        img.header, img.footer {
+            width: 600px;
+            height: auto;
+            display: block;
+            margin: 0 auto 20px;
+        }
+
+        p {
+            font-family: Arial, Helvetica, sans-serif;
+            font-weight: 400;
+            font-size: 1rem;
+            line-height: 20px;
+            text-align: center;
+            width: 100%;
+            color: #082F4D;
+        }
+
+        .main-table {
+            margin: 0 auto;
+        }
+
+        .limited-width {
+            max-width: 80%;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .social-section {
+            background-color: #171717;
+            padding: 20px 0;
+            margin: 0;
+        }
+
+        .social-section td {
+            padding: 0 15px;
+        }
+
+        .social-icon {
+            width: 37px;
+            height: auto;
+            display: block;
+            margin: 0 auto 10px;
+        }
+    </style>
+</head>
+<body>
+    <table role="presentation" class="main-table" width="600px" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+        <!-- Header -->
+        <tr>
+            <td width="600px" style="padding:0;background-color: #ffffff;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600px" style="margin:0">
+                    <tr>
+                        <td>
+                            <a href="https://vimac.cl" target="_blank">
+                                <img class="header" src="https://vimac.cl/wp-content/uploads/mailings/mail_cotizacion/Header-Vimac.jpg" alt="Vimac">
+                            </a>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <!-- Saludo -->
+        <tr>
+            <td align="center">
+                <div class="limited-width">
+                    <p style="font-size: 1.5rem; color: #082F4D; margin-bottom: 20px;">{{ saludo_correo }}</p>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td align="center">
+                <div class="limited-width">
+                    <p style="font-size: 1rem; color: #082F4D; margin-bottom: 30px;">
+                        {{ mensaje_presentacion }}
+                    </p>
+                </div>
+            </td>
+        </tr>
+
+        <!-- Productos dinámicos -->
+        <tr class="body-section">
+            <td width="600px">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600px" style="margin:0 0 20px">
+                    <tr>
+                        <td width="600px">
+                            {{ productos_html }}
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+
+        <!-- Cierre del correo -->
+        <tr class="body-section">
+            <td align="center">
+                <div class="limited-width">
+                    <p style="font-size: 1rem; font-weight: bold; color: #082F4D; margin-bottom: 10px;">
+                        {{ cierre_negrita }}
+                    </p>
+                    <p style="font-size: 1rem; color: #082F4D; margin-bottom: 30px;">
+                        {{ cierre_normal }}
+                    </p>
+                </div>
+            </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+            <td width="600px" style="padding:0;background-color: #171717;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600px" style="margin:0">
+                    <tr>
+                        <td width="600px">
+                            <a href="https://vimac.cl" target="_blank">
+                                <img class="footer" src="https://vimac.cl/wp-content/uploads/mailings/mail_cotizacion/Footer-Vimac.jpg" alt="Vimac">
+                            </a>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+
+        <!-- Redes sociales con fondo azul -->
+        <tr class="social-section">
+            <td width="600px">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #171717; padding: 20px 0; text-align: center; margin: 0; border-collapse: collapse;">
+                    <tr align="center">
+                        <td style="padding: 0 15px;">
+                            <a href="https://www.facebook.com/InmobiliariaVimac/" target="_blank">
+                                <img class="social-icon" src="https://vimac.cl/wp-content/uploads/mailings/mail_cotizacion/facebook_vimac.png" alt="facebook" />
+                            </a>
+                        </td>
+                        <td style="padding: 0 15px;">
+                            <a href="https://www.instagram.com/inmobiliariavimac/" target="_blank">
+                                <img class="social-icon" src="https://vimac.cl/wp-content/uploads/mailings/mail_cotizacion/insta_vimac.png" alt="Instagram" />
+                            </a>
+                        </td>
+                        <td style="padding: 0 15px;">
+                            <a href="https://www.youtube.com/user/Vimacinmobiliaria" target="_blank">
+                                <img class="social-icon" src="https://vimac.cl/wp-content/uploads/mailings/mail_cotizacion/youtube_vimac.png" alt="Youtube" />
+                            </a>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

@@ -1,18 +1,12 @@
 import random
 
 # Diccionario con variaciones de preguntas
-PREGUNTAS_VARIADAS = {
+POSIBLES_PREGUNTAS = {
     'nombre': [
         '¡Gracias por tu interés en nuestro proyecto! Para una atención más personalizada, ¿podrías decirme tu nombre, por favor?',
         '¡Qué gusto que estés interesado en nuestro proyecto! ¿Me podrías dar tu nombre para continuar?',
         'Estoy encantada de ayudarte. ¿Me puedes decir tu nombre para ofrecerte una atención más personalizada?',
         'Me alegra mucho tu interés en el proyecto. ¿Podrías proporcionarme tu nombre?',
-    ],
-    'comuna': [
-        'Gracias {primer_nombre}, ¿en qué comuna estás interesado en cotizar?',
-        'Muy bien {primer_nombre}, ¿podrías decirme la comuna en la que te gustaría cotizar?',
-        'Muy bien {primer_nombre}, ¿me puedes decir la comuna donde te gustaría cotizar?',
-        'Genial {primer_nombre}, ¿en qué comuna estás pensando cotizar?',
     ],
     'correo': [
         'Excelente {primer_nombre}, antes de continuar, ¿podrías proporcionarme tu correo electrónico para enviarte información detallada sobre tu cotización?',
@@ -141,5 +135,5 @@ PREGUNTAS_VARIADAS = {
 
 def obtener_pregunta(tipo_pregunta, **kwargs):
     """Obtiene una pregunta aleatoria del tipo especificado y la formatea."""
-    pregunta = random.choice(PREGUNTAS_VARIADAS[tipo_pregunta])
+    pregunta = random.choice(POSIBLES_PREGUNTAS[tipo_pregunta])
     return pregunta.format(**kwargs)
