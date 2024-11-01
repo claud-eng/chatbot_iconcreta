@@ -1,6 +1,6 @@
 /* Estilos para el panel de encabezado del chatbot */
 .chat-header {
-    background-color: #0a63bd; /* Color de fondo del encabezado */
+    background-color: #2e517b; /* Color de fondo del encabezado */
     color: white; /* Color de texto del encabezado */
     padding: 5px 10px; /* Reducir el espaciado dentro del encabezado */
     border-top-left-radius: 8px; /* Redondeo de las esquinas superiores */
@@ -90,7 +90,7 @@
 .minimized-icon {
     display: none; /* Inicialmente oculto */
     position: fixed;
-    bottom: 20px;
+    bottom: 60px;
     right: 0px;
     width: 120px; /* Ajusta el ancho de la imagen */
     height: 120px; /* Ajusta la altura de la imagen */
@@ -106,7 +106,7 @@
 .message-bubble {
     display: none; /* Inicialmente oculto */
     position: fixed;
-    bottom: 150px; /* Ajusta la posición para estar por encima de la imagen */
+    bottom: 160px; /* Ajusta la posición para estar por encima de la imagen */
     right: 20px; /* Ajusta la posición para estar a la derecha de la imagen */
     background-color: white;
     border: 1px solid #ccc;
@@ -135,7 +135,7 @@
 
 /* Botón para abrir/cerrar el chatbot */
 .toggle-chat-btn {
-    background-color: #0a63bd;
+    background-color: #2e517b;
     color: white;
     padding: 10px;
     border: none;
@@ -182,7 +182,7 @@
 }
 
 .user-message {
-    background-color: #0a63bd;
+    background-color: #2e517b;
     color: white;
     align-self: flex-end;
     margin-left: 150px;
@@ -198,15 +198,21 @@
 
 /* Botón de enviar ajustado con el nuevo color */
 .btn-primary {
-    background-color: #0a63bd; /* Color de fondo del botón */
-    border-color: #0a63bd; /* Color del borde del botón */
+    background-color: #000000; /* Color de fondo del botón */
+    border-color: #000000; /* Color del borde del botón */
+}
+
+/* Cambiar a azul cuando el mouse esté sobre el botón */
+.btn-primary:hover {
+    background-color: #2e517b; /* Cambia a color azul */
+    border-color: #2e517b; /* Cambia el borde a color azul también */
 }
 
 /* Botones de las opciones */
 .option-button {
     background-color: #fff;
-    color: #0a63bd;
-    border: 1px solid #0a63bd;
+    color: #2e517b;
+    border: 1px solid #2e517b;
     padding: 10px 15px; /* Aumentar el padding para mejor visualización */
     margin: 5px 10px 5px 0; /* Margen superior e inferior de 5px y margen derecho de 10px */
     border-radius: 5px;
@@ -218,7 +224,7 @@
 }
 
     .option-button:hover {
-        background-color: #0a63bd;
+        background-color: #2e517b;
         color: white;
     }
 

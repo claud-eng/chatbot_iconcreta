@@ -9,16 +9,9 @@ def seleccionar_ruta_configuracion(url_cliente, proyecto=None):
             # Agregar más proyectos para localhost según sea necesario
         },
         "127.0.0.1": {
-            "default": r"D:\\App_Data\\demoinm-PMC.cfg",
+            "default": r"D:\\App_Data\\demoinm.cfg",
             "pmc": r"D:\\App_Data\\demoinm-PMC.cfg",
-            "ada": r"D:\\App_Data\\demoinm-ADA.cfg",
             # Agregar más proyectos para localhost según sea necesario
-        },
-        "desarrollo.iconcreta.com": {
-            "default": r"D:\\App_Data\\desarrollo-PMC.cfg",
-            "cza": r"D:\\App_Data\\desarrollo-CZA.cfg",
-            "chi": r"D:\\App_Data\\desarrollo-CHI.cfg",
-            # Agregar más proyectos para desarrollo.iconcreta.com según sea necesario
         },
         # Agregar más URLs y sus proyectos según sea necesario
     }

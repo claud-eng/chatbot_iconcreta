@@ -135,7 +135,7 @@
 
 /* Botón para abrir/cerrar el chatbot */
 .toggle-chat-btn {
-    background-color: #0a63bd;
+    background-color: #000000;
     color: white;
     padding: 10px;
     border: none;
@@ -182,7 +182,7 @@
 }
 
 .user-message {
-    background-color: #0a63bd;
+    background-color: #000000;
     color: white;
     align-self: flex-end;
     margin-left: 150px;
@@ -198,15 +198,21 @@
 
 /* Botón de enviar ajustado con el nuevo color */
 .btn-primary {
-    background-color: #0a63bd; /* Color de fondo del botón */
-    border-color: #0a63bd; /* Color del borde del botón */
+    background-color: #2e517b; /* Color de fondo del botón */
+    border-color: #2e517b; /* Color del borde del botón */
+}
+
+/* Cambiar a negro cuando el mouse esté sobre el botón */
+.btn-primary:hover {
+    background-color: #000000; /* Cambia a color negro */
+    border-color: #000000; /* Cambia el borde a color negro también */
 }
 
 /* Botones de las opciones */
 .option-button {
     background-color: #fff;
-    color: #0a63bd;
-    border: 1px solid #0a63bd;
+    color: #000000;
+    border: 1px solid #000000;
     padding: 10px 15px; /* Aumentar el padding para mejor visualización */
     margin: 5px 10px 5px 0; /* Margen superior e inferior de 5px y margen derecho de 10px */
     border-radius: 5px;
@@ -218,7 +224,7 @@
 }
 
     .option-button:hover {
-        background-color: #0a63bd;
+        background-color: #000000;
         color: white;
     }
 

@@ -7,12 +7,16 @@
     var domain = url.hostname;
 
     // Cargar archivo CSS dependiendo de la URL
-    if (domain.includes('probar.iconcreta.com')) {
-        customStylesLink.href = '/static/css/widget2.css';
-    } else if (domain.includes('www.prueba.com')) {
-        customStylesLink.href = '/static/css/prueba.css';
-    } else if (domain.includes('www.test.cl')) {
-        customStylesLink.href = '/static/css/test.css';
+    if (domain.includes('desarrollo.iconcreta.com')) {
+        customStylesLink.href = '/static/css/widget.css';
+    } else if (domain.includes('www.espacioandres.cl')) {
+        customStylesLink.href = '/static/css/widget_lfl_inmo168.css';
+    } else if (domain.includes('www.vimac.cl')) {
+        customStylesLink.href = '/static/css/widget_vimac.css';
+    } else if (domain.includes('www.ivmc.cl')) {
+        customStylesLink.href = '/static/css/widget_vmc.css';
+    } else if (domain.includes('desarrollos.want.cl')) {
+        customStylesLink.href = '/static/css/widget_vmc.css';
     } else {
         customStylesLink.href = '/static/css/widget.css'; // Archivo CSS por defecto
     }
@@ -30,11 +34,27 @@
         chatWidgetDiv.classList.add('chat-widget');
         document.body.appendChild(chatWidgetDiv);
 
+        var domainTextMap = {
+            'www.vimac.cl': 'Asistente Virtual Vimac',
+            'vimac.cl': 'Asistente Virtual Vimac',
+            'www.ivmc.cl': 'Asistente Virtual VMC',
+            'ivmc.cl': 'Asistente Virtual VMC',
+            'desarrollos.want.cl': 'Asistente Virtual VMC',
+            'localhost': 'Asistente Virtual VMC',
+            // Agregar más dominios y sus textos correspondientes según sea necesario
+        };
+    
+        var mainText = domainTextMap[domain] || 'Asistente Virtual';
+        var logoText = `
+            <span class="main-text">${mainText}</span><br>
+            <span class="small-text"><i>Desarrollado por</i> <a href="https://iconcreta.com/" target="_blank"><i>www.iconcreta.com</i></a></span>
+        `;
+    
         // Agregar el HTML interno del widget de chat
         chatWidgetDiv.innerHTML = `
             <div class="chat-header">
                 <div class="chat-logo-text">
-                    Desarrollado por <br><a href="https://iconcreta.com/" target="_blank">www.iconcreta.com</a>
+                    ${logoText}
                 </div>
                 <button class="minimize-chat-btn">-</button>
                 <button class="toggle-chat-btn">Chat</button>
@@ -55,13 +75,37 @@
             sendMessage();
         });
 
+                // Definir las imágenes según el dominio
+        var domainIconMap = {
+            'www.vimac.cl': '/static/img/vimac_icon.png',
+            'vimac.cl': '/static/img/vimac_icon.png',
+            'www.ivmc.cl': '/static/img/vmc_icon.png',
+            'ivmc.cl': '/static/img/vmc_icon.png',
+            'desarrollos.want.cl': '/static/img/vmc_icon.png',
+            'www.desarrollos.want.cl': '/static/img/vmc_icon.png',
+            'localhost': '/static/img/alejandra_icon.png',
+            // Agregar más dominios y sus respectivas imágenes según sea necesario
+        };
+
         // Crear y agregar el botón de maximizar fuera del chatWidgetDiv
-        var minimizedIcon = document.createElement('div');
+        var minimizedIcon = document.createElement('img');
         minimizedIcon.className = 'minimized-icon';
-        minimizedIcon.innerHTML = '+';
+        minimizedIcon.src = domainIconMap[domain] || '/static/img/alejandra_icon.png'; // Imagen por defecto si no coincide con ningún dominio
+        minimizedIcon.alt = 'Abrir Chatbot';
         minimizedIcon.onclick = function () { toggleChat(true); };
         minimizedIcon.style.display = 'none'; // Inicialmente oculto
         document.body.appendChild(minimizedIcon);
+
+        // Crear y agregar la burbuja de mensaje
+        var messageBubble = document.createElement('div');
+        messageBubble.className = 'message-bubble';
+        messageBubble.innerHTML = '¡Hola! ¿Necesitas ayuda para cotizar? <br> ¡Déjame ayudarte!';
+        messageBubble.onclick = function () {
+            toggleChat(true);
+            minimizedIcon.style.display = 'none';
+            messageBubble.style.display = 'none';
+        };
+        document.body.appendChild(messageBubble);
 
         var minimizeChatButton = chatWidgetDiv.querySelector('.minimize-chat-btn');
         var toggleChatButton = chatWidgetDiv.querySelector('.toggle-chat-btn');
@@ -73,6 +117,17 @@
             toggleChat(true); // Maximizar
         });
 
+        // Mostrar la burbuja de mensaje solo la primera vez que se carga la página
+        if (!getWithExpiry('chatBubbleShown')) {
+            var bubbleTimeout = setTimeout(function () {
+                messageBubble.style.display = 'none';
+            }, 15000);
+            messageBubble.style.display = 'block';
+            setWithExpiry('chatBubbleShown', 'true', 2 * 24 * 60 * 60 * 1000); // Marcar que la burbuja fue mostrada
+        } else {
+            messageBubble.style.display = 'none';
+        }
+
         // Cargar el estado guardado del chat
         var chatState = loadChatState();
         toggleChat(chatState === 'open'); // Llama directamente a la función con true o false según el estado guardado
@@ -83,11 +138,13 @@
                 chatWidgetDiv.classList.add('open');
                 chatWidgetDiv.classList.remove('minimized');
                 minimizedIcon.style.display = 'none';
+                messageBubble.style.display = 'none'; // Ocultar la burbuja al maximizar
                 saveChatState(true); // Guardar el estado como abierto
+                clearTimeout(bubbleTimeout); // Detener el timeout si se abre el chat
             } else {
                 chatWidgetDiv.classList.remove('open');
                 chatWidgetDiv.classList.add('minimized');
-                minimizedIcon.style.display = 'flex'; // Asegura que el botón de maximizar se muestre cuando el chat se minimiza
+                minimizedIcon.style.display = 'block'; // Asegura que el botón de maximizar se muestre cuando el chat se minimiza
                 saveChatState(false); // Guardar el estado como minimizado
             }
         }
@@ -140,16 +197,25 @@
         function handleBotOptions(options, state) {
             var chatBox = chatWidgetDiv.querySelector('#chatBox');
             removePreviousOptions(); // Eliminar las opciones anteriores
-
+        
+            // Obtener la URL actual para verificar el dominio
+            var currentUrl = window.location.href;
+            var parsedUrl = new URL(currentUrl);
+            var currentDomain = parsedUrl.hostname;
+        
+            // Lista de dominios sin selección automática
+            var dominiosSinSeleccionAutomatica = ['desarrollos.want.cl', 'ivmc.cl', 'localhost'];
+        
             if (options && options.length > 0) {
                 setWithExpiry('chatBotOptionsAvailable', 'true', 2 * 24 * 60 * 60 * 1000); // 2 días en milisegundos
-
-                if (state === 'seleccionando_proyecto' && options.length === 1) {
+        
+                // Condición para determinar si aplicar la selección automática
+                if (state === 'seleccionando_proyecto' && options.length === 1 && !dominiosSinSeleccionAutomatica.includes(currentDomain)) {
                     // Selección automática para flujo 'seleccionando_proyecto' con una sola opción
                     sendMessage(options[0].value, options[0].text, true);
                     return;
                 }
-
+        
                 options.forEach(function (option) {
                     var optionButton = document.createElement('button');
                     optionButton.textContent = option.text;
