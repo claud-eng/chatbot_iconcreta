@@ -25,14 +25,8 @@ def flujo_dptos_casas(request):
     # Bandera para verificar si es una segunda cotización
     cotizacion_subsecuente = session_data.get('cotizacion_subsecuente', False)
 
-    # Lista de dominios donde no se debe mostrar la opción de "reclamo"
-    dominios_sin_reclamo = [
-        "desarrollos.want.cl",
-        "vimac.cl",
-        "www.vimac.cl",
-        "localhost"
-        # Añadir más dominios según sea necesario
-    ]
+    # Llamar a la función para obtener los dominios
+    dominios_sin_reclamo = obtener_dominios_sin_reclamo()
 
     # Extraer el dominio de la URL para la comparación
     parsed_url = urlparse(url_cliente)
@@ -215,7 +209,7 @@ def flujo_dptos_casas(request):
             prompt_validar_nombre = f"El usuario dijo: '{user_message}'. Teniendo en cuenta que el usuario puede incluir agradecimientos o frases adicionales antes y/o después de dar su nombre (recordar que es opcional), el usuario en la frase que ha dicho, ¿En alguna parte menciona su nombre? responde si o no (tener en cuenta de que algunas personas de manera opcional puede que ingresen sus dos nombres y dos apellidos). Sólo es obligatorio ingresar el primer nombre."
             response_openai = llamar_openai(prompt_validar_nombre)
             if "sí" in response_openai.lower():
-                prompt_extraer_nombre = f"Extrae el nombre completo (nombre y apellido) del siguiente texto: '{user_message}'. (En caso de sólo haber un nombre solo extrae eso, ya que el segundo nombre y los apellidos son opcionales)."
+                prompt_extraer_nombre = f"Extrae el nombre completo (nombre y apellido) del siguiente texto: '{user_message}' y capitalizalo. (En caso de sólo haber un nombre solo extrae eso, ya que el segundo nombre y los apellidos son opcionales). Devuelve solo el nombre, sin ningún otro texto."
                 nombre_completo = llamar_openai(prompt_extraer_nombre).strip()
                 primer_nombre = extraer_primer_nombre(nombre_completo)
                 session_data['context'].append({'nombre_completo': nombre_completo, 'primer_nombre': primer_nombre})
@@ -321,14 +315,44 @@ def flujo_dptos_casas(request):
         
         if "sí" in respuesta_verificar_correo.lower():
             # Si hay un correo, intenta extraerlo
-            prompt_extraer_correo = f"Extrae la dirección de correo electrónico del siguiente mensaje del usuario: '{user_message}'."
+            prompt_extraer_correo = f"Extrae la dirección de correo electrónico del siguiente mensaje del usuario: '{user_message}'. Devuelve solo el correo, sin ningún otro texto."
             correo_extraido = llamar_openai(prompt_extraer_correo).strip()
             
             # Valida el correo extraído
             if validar_correo(correo_extraido):
                 # Si el correo es válido, continúa con el flujo
                 session_data['context'].append({'correo': correo_extraido})
+                session_data['state'] = 'solicitando_rut'
+                
+                # Solicita el RUT con un mensaje dinámico
+                response = obtener_pregunta('rut', primer_nombre=primer_nombre)
+                options = []  # No hay opciones aquí, solo se solicita el RUT
+            else:
+                # Si OpenAI proporciona una cadena que no es un correo válido, solicita que se ingrese de nuevo
+                response = obtener_pregunta('correo_invalido')
+        else:
+            # Si OpenAI indica que no hay un correo, solicita que se ingrese de nuevo
+            response = obtener_pregunta('correo_no_detectado')
+
+    elif session_data['state'] == 'solicitando_rut':
+        primer_nombre = next((item['primer_nombre'] for item in session_data['context'] if 'primer_nombre' in item), "cliente")
+
+        # Utiliza OpenAI para validar el RUT ingresado por el usuario
+        prompt_validar_rut = f"El usuario dijo: '{user_message}'. ¿Es esto un RUT chileno válido? Responde 'sí' o 'no'. Recuerda que la persona puede ingresar el RUT con puntos y guión, sin puntos y con guión, sin puntos y sin guión y/o acompañado de una frase."
+        respuesta_validar_rut = llamar_openai(prompt_validar_rut)
+        
+        if "sí" in respuesta_validar_rut.lower():
+            # Extrae el RUT en el formato requerido (sin puntos y con guion)
+            prompt_extraer_rut = f"Extrae el RUT chileno en el formato sin puntos y con guion del siguiente texto: '{user_message}'. Devuelve solo el RUT, sin ningún otro texto."
+            rut_formateado = llamar_openai(prompt_extraer_rut).strip()
+            
+            if rut_formateado:
+                # Si el RUT es válido, guárdalo en el contexto
+                session_data['context'].append({'rut': rut_formateado})
                 session_data['state'] = 'solicitando_dormitorios'
+                
+                # Pregunta por la cantidad de dormitorios con un mensaje dinámico
+                response = obtener_pregunta('dormitorios', primer_nombre=primer_nombre)
                 
                 # Filtrar opciones de dormitorios basadas en el proyecto seleccionado
                 opciones_dormitorios = next((item['opciones_dormitorios'] for item in session_data['context'] if 'opciones_dormitorios' in item), [])
@@ -345,17 +369,17 @@ def flujo_dptos_casas(request):
                         {'text': '4 dormitorios', 'value': '4'},
                         {'text': 'Más de 4 dormitorios', 'value': '5+'},
                     ]
-                
-                response = obtener_pregunta('dormitorios', primer_nombre=primer_nombre)
             else:
-                # Si OpenAI proporciona una cadena que no es un correo válido, solicita que se ingrese de nuevo
-                response = obtener_pregunta('correo_invalido')
+                # Si OpenAI no devuelve un RUT en el formato esperado, solicita nuevamente con un mensaje dinámico
+                response = obtener_pregunta('rut_invalido', primer_nombre=primer_nombre)
+                options = []
         else:
-            # Si OpenAI indica que no hay un correo, solicita que se ingrese de nuevo
-            response = obtener_pregunta('correo_no_detectado')
+            # Si OpenAI determina que el RUT no es válido, solicita nuevamente con un mensaje dinámico
+            response = obtener_pregunta('rut_no_detectado', primer_nombre=primer_nombre)
+            options = []
 
     elif session_data['state'] == 'solicitando_dormitorios':
-        
+        # Manejo de la selección de dormitorios
         cantidad_dormitorios = user_message.split()[0]  # Esto extraerá el número de la respuesta
         session_data['context'].append({'dormitorios': cantidad_dormitorios})
 
@@ -390,7 +414,6 @@ def flujo_dptos_casas(request):
                 {'text': '3 baños', 'value': '3'},
                 {'text': '4 o más baños', 'value': '4+'},
             ]
-
         response = obtener_pregunta('banos')
 
     elif session_data['state'] == 'solicitando_banos':
@@ -454,14 +477,18 @@ def flujo_dptos_casas(request):
                     nombre_completo = next((item['nombre_completo'] for item in session_data['context'] if 'nombre_completo' in item), "Desconocido")
                     correo = next((item['correo'] for item in session_data['context'] if 'correo' in item), "Desconocido")
                     telefono = next((item['telefono'] for item in session_data['context'] if 'telefono' in item), "")
+                    rut_formateado = next((item['rut'] for item in session_data['context'] if 'rut' in item), "Sin especificar")
                     convertir_rango_precio_a_texto = next((precio_a_texto[item['rango_precio']] for item in session_data['context'] if 'rango_precio' in item), "Desconocido")
                     tipo_inmueble = next((item['tipo_inmueble'] for item in session_data['context'] if 'tipo_inmueble' in item), "Desconocido")
                     dormitorios = next((item['dormitorios'] for item in session_data['context'] if 'dormitorios' in item), "Desconocido")
                     banos = next((item['banos'] for item in session_data['context'] if 'banos' in item), "Desconocido")
                     proyecto = next((item['proyecto'] for item in session_data['context'] if 'proyecto' in item), "Desconocido")
-                    
-                    # Enviar correo a Iconcreta para procesar al cotizante y subirlo al CRM
-                    enviar_correo_iconcreta(nombre_completo, correo, telefono, convertir_rango_precio_a_texto, tipo_inmueble, dormitorios, banos, url_cliente, proyecto)
+
+                    # Llama a la función actualizada con el RUT formateado
+                    enviar_correo_iconcreta(
+                        nombre_completo, correo, telefono, rut_formateado, convertir_rango_precio_a_texto,
+                        tipo_inmueble, dormitorios, banos, url_cliente, proyecto
+                    )
 
                 # Determina el tipo de inmueble para el mensaje, basado en la elección del usuario
                 tipo_inmueble_texto = "Departamento" if tipo_inmueble.lower() == "departamento" else "Casa"
@@ -640,19 +667,25 @@ def flujo_dptos_casas(request):
             nombre_completo = next((item['nombre_completo'] for item in session_data['context'] if 'nombre_completo' in item), "Desconocido")
             correo = next((item['correo'] for item in session_data['context'] if 'correo' in item), "Desconocido")
             telefono = next((item['telefono'] for item in session_data['context'] if 'telefono' in item), "")
+            rut_formateado = next((item['rut'] for item in session_data['context'] if 'rut' in item), "Sin especificar")
             convertir_rango_precio_a_texto = next((precio_a_texto[item['rango_precio']] for item in session_data['context'] if 'rango_precio' in item), "Desconocido")
             tipo_inmueble = next((item['tipo_inmueble'] for item in session_data['context'] if 'tipo_inmueble' in item), "Desconocido")
             dormitorios = next((item['dormitorios'] for item in session_data['context'] if 'dormitorios' in item), "Desconocido")
             banos = next((item['banos'] for item in session_data['context'] if 'banos' in item), "Desconocido")
             proyecto = next((item['proyecto'] for item in session_data['context'] if 'proyecto' in item), "Desconocido")
 
-            # Enviar correo a Iconcreta para procesar al cotizante y subirlo al CRM
-            enviar_correo_iconcreta(nombre_completo, correo, telefono, convertir_rango_precio_a_texto, tipo_inmueble, dormitorios, banos, url_cliente, proyecto)
+            # Llama a la función actualizada con el RUT formateado
+            enviar_correo_iconcreta(
+                nombre_completo, correo, telefono, rut_formateado, convertir_rango_precio_a_texto,
+                tipo_inmueble, dormitorios, banos, url_cliente, proyecto
+            )
 
     elif session_data['state'] == 'ingresando_telefono':
         # Extracción de datos previos necesarios para enviar por correo
         nombre_completo = next((item['nombre_completo'] for item in session_data['context'] if 'nombre_completo' in item), "Desconocido")
         correo = next((item['correo'] for item in session_data['context'] if 'correo' in item), "Desconocido")
+        telefono = next((item['telefono'] for item in session_data['context'] if 'telefono' in item), "")
+        rut_formateado = next((item['rut'] for item in session_data['context'] if 'rut' in item), "Sin especificar")
         convertir_rango_precio_a_texto = next((precio_a_texto[item['rango_precio']] for item in session_data['context'] if 'rango_precio' in item), "Desconocido")
         tipo_inmueble = next((item['tipo_inmueble'] for item in session_data['context'] if 'tipo_inmueble' in item), "Desconocido")
         dormitorios = next((item['dormitorios'] for item in session_data['context'] if 'dormitorios' in item), "Desconocido")
@@ -683,7 +716,7 @@ def flujo_dptos_casas(request):
                 session_data['ha_dado_telefono'] = True
                 response = f"Gracias por proporcionar tu número de teléfono. ¿Te puedo ayudar en algo más?"
                 # Enviar correo con datos recopilados, incluyendo el teléfono
-                enviar_correo_iconcreta(nombre_completo, correo, telefono, convertir_rango_precio_a_texto, tipo_inmueble, dormitorios, banos, url_cliente, proyecto)
+                enviar_correo_iconcreta(nombre_completo, correo, telefono, rut_formateado, convertir_rango_precio_a_texto, tipo_inmueble, dormitorios, banos, url_cliente, proyecto)
                 options = [{'text': 'Sí, quiero seguir cotizando', 'value': 'cotizar'},
                         {'text': 'No, volver al inicio', 'value': 'inicio'}]
                 session_data['state'] = 'finalizacion'
@@ -694,15 +727,35 @@ def flujo_dptos_casas(request):
             prompt_validar_telefono = f"¿La frase '{user_message}' contiene un número de teléfono con al menos 8 dígitos numéricos? Solo responde sí o no."
             respuesta_verificacion = llamar_openai(prompt_validar_telefono)
 
-            if respuesta_verificacion.lower() == "sí":
-                prompt_ajustar_telefono = f"Extrae y ajusta al formato chileno el número de teléfono presente en la frase '{user_message}'. El formato chileno es '+569' seguido de los 8 dígitos locales para teléfonos móviles o '+562' seguido de los 8 dígitos locales para teléfonos fijos, entrégame como respuesta solo el número junto con el prefijo."
+            if "sí" in respuesta_verificacion.lower():
+                prompt_ajustar_telefono = f"""
+                Analiza el siguiente texto: '{user_message}' y extrae un número de teléfono válido en formato chileno. 
+                Aplica las siguientes reglas estrictamente y no cometas errores:
+                1. Si el texto contiene exactamente **8 dígitos numéricos**, asume que es un número móvil local y agrégale el prefijo '+569'. Devuelve el resultado en este formato: '+569XXXXXXXX'. Por ejemplo:
+                - Entrada: '940635844' -> Salida: '+56940635844'
+                2. Si el texto contiene exactamente **9 dígitos numéricos**, verifica:
+                - Si comienza con '9', es un móvil. Agrega el prefijo '+56' para devolver: '+569XXXXXXXX'.
+                - Si comienza con '2', es un fijo. Agrega el prefijo '+56' para devolver: '+562XXXXXXXX'.
+                3. Si el texto ya incluye un número completo en formato chileno válido ('+569XXXXXXXX' o '+562XXXXXXXX'), acéptalo tal cual sin modificarlo.
+                4. Si el texto contiene un número sin el prefijo '+', agrégalo automáticamente de acuerdo con las reglas anteriores.
+                5. Ignora cualquier texto no relacionado. Si no puedes encontrar un número que cumpla estas reglas, responde: "No se encontró un número válido".
+
+                **Solo debes devolver el número ajustado en el formato correcto. No incluyas ninguna explicación ni texto adicional.**
+
+                Ejemplos de entrada y salida:
+                - Entrada: '940635844' -> Salida: '+56940635844'
+                - Entrada: '240635844' -> Salida: '+56240635844'
+                - Entrada: '+56940635844' -> Salida: '+56940635844'
+                - Entrada: '56940635844' -> Salida: '+56940635844'
+                - Entrada: '+56240635844' -> Salida: '+56240635844'
+                """
                 telefono = llamar_openai(prompt_ajustar_telefono)
                 
                 if telefono:
                     session_data['context'].append({'telefono': telefono})
                     session_data['ha_dado_telefono'] = True
                     response = "Gracias por proporcionar tu número de teléfono. ¿Te puedo ayudar en algo más?"
-                    enviar_correo_iconcreta(nombre_completo, correo, telefono, convertir_rango_precio_a_texto, tipo_inmueble, dormitorios, banos, url_cliente, proyecto)
+                    enviar_correo_iconcreta(nombre_completo, correo, telefono, rut_formateado, convertir_rango_precio_a_texto, tipo_inmueble, dormitorios, banos, url_cliente, proyecto)
                     options = [{'text': 'Sí, quiero seguir cotizando', 'value': 'cotizar'},
                             {'text': 'No, volver al inicio', 'value': 'inicio'}]
                     session_data['state'] = 'finalizacion'
@@ -718,7 +771,7 @@ def flujo_dptos_casas(request):
             session_data['cotizacion_subsecuente'] = True  # Marcar como segunda cotización
             
             # Limpiar datos de productos, pero mantener nombre y correo
-            datos_a_mantener = ['nombre_completo', 'correo']
+            datos_a_mantener = ['nombre_completo', 'correo', 'telefono', 'rut']
             session_data['context'] = [item for item in session_data['context'] if any(clave in item for clave in datos_a_mantener)]
             
             # Limpiar productos anteriores

@@ -34,6 +34,19 @@ POSIBLES_PREGUNTAS = {
         'Genial, ¿me puedes decir el rango de precios que estás considerando?',
         'Para seguir, ¿qué rango de precios te interesa?',
     ],
+    'rut': [
+        'Gracias, {primer_nombre}. Ahora, por favor, dime tu RUT para continuar.',
+        'Perfecto, {primer_nombre}. ¿Me puedes proporcionar tu RUT?',
+    ],
+    'rut_invalido': [
+        'El RUT ingresado no parece válido, {primer_nombre}. Por favor, inténtalo de nuevo.',
+        'No pude reconocer el RUT que ingresaste, {primer_nombre}. Por favor, verifica que esté bien escrito e inténtalo de nuevo.',
+        'Hubo un error al validar tu RUT, {primer_nombre}. ¿Podrías intentarlo otra vez?',
+    ],
+    'rut_no_detectado': [
+        '{primer_nombre}, parece que no ingresaste un RUT. ¿Puedes proporcionarlo, por favor?',
+        'Parece que no proporcionaste un RUT, {primer_nombre}. Por favor, escríbelo de nuevo para que podamos continuar.',
+    ],
     'dormitorios': [
         'Perfecto, {primer_nombre}, ¿cuántos dormitorios necesitas?',
         'Genial, {primer_nombre}, ¿me puedes decir cuántos dormitorios te gustaría tener?',
