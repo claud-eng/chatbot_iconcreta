@@ -13,18 +13,27 @@ import unicodedata
 # Función para establecer la conexión con openAI
 def llamar_openai(prompt):
     try:
-        response = openai.Completion.create(
-            engine="gpt-3.5-turbo-instruct",
-            prompt=prompt,
+        # Define los mensajes del chat
+        messages = [
+            {"role": "system", "content": "Eres un asistente virtual útil."},
+            {"role": "user", "content": prompt}
+        ]
+
+        # Llamada a la API con el modelo GPT-4
+        response = openai.ChatCompletion.create(
+            model="gpt-4o-mini",  
+            messages=messages,
             max_tokens=1000,
             temperature=0.3
         )
-        respuesta_openai = response.choices[0].text.strip()
-        print(f"OpenAI response: {respuesta_openai}")  
+        
+        # Extraer el contenido de la respuesta
+        respuesta_openai = response['choices'][0]['message']['content'].strip()
+        print(f"OpenAI response: {respuesta_openai}")  # Depuración opcional
         return respuesta_openai
     except Exception as e:
         return f"Ocurrió un error al generar la respuesta: {str(e)}"
-
+    
 # Función para leer los archivos de configuración por proyecto en un formato específico
 def leer_archivo_configuracion(url_cliente=None, proyecto=None, ruta_archivo=None):
     if ruta_archivo is None:
@@ -48,7 +57,7 @@ def leer_archivo_configuracion(url_cliente=None, proyecto=None, ruta_archivo=Non
     return configuracion
 
 # Función para enviar correo electrónico a Iconcreta tras realizar una cotización y que pueda ser procesada para ser subida al CRM
-def enviar_correo_iconcreta(name, email, telefono, convertir_rango_precio_a_texto, tipo_inmueble, dormitorios, banos, url_cliente, proyecto):
+def enviar_correo_iconcreta(name, email, telefono, rut_formateado, convertir_rango_precio_a_texto, tipo_inmueble, dormitorios, banos, url_cliente, proyecto):
     # Seleccionar el archivo de configuración basado en la URL del cliente y el proyecto
     ruta_archivo_configuracion = seleccionar_ruta_configuracion(url_cliente, proyecto)
     parametros_archivo_configuracion = leer_archivo_configuracion(ruta_archivo=ruta_archivo_configuracion)  # Pasar ruta_archivo_configuracion como ruta_archivo
@@ -71,7 +80,17 @@ def enviar_correo_iconcreta(name, email, telefono, convertir_rango_precio_a_text
     # Formato del mensaje de comentarios
     comentario = f'La persona cotizó {articulo} {tipo_inmueble} del proyecto {proyecto_correo}, con {dormitorios} {pluralizar_dormitorio} y {banos} {pluralizar_bano} a un precio {modificar_texto_precio}.'
 
-    content = f'ORIGEN: ChatBot\nPROYECTO: {proyecto_correo}\nNOMBRE Y APELLIDO: {name}\nEMAIL: {email}\nTELEFONO: {telefono}\nPRECIO: {convertir_rango_precio_a_texto}\nCOMENTARIO: {comentario}'
+    # Incluir el RUT formateado en el contenido
+    content = (
+        f'ORIGEN: ChatBot\n'
+        f'PROYECTO: {proyecto_correo}\n'
+        f'NOMBRE Y APELLIDO: {name}\n'
+        f'EMAIL: {email}\n'
+        f'TELEFONO: {telefono}\n'
+        f'RUT: {rut_formateado}\n'
+        f'PRECIO: {convertir_rango_precio_a_texto}\n'
+        f'COMENTARIO: {comentario}'
+    )
 
     message = Mail(from_email=from_email, to_emails=to_email, subject=subject, plain_text_content=content)
     try:
@@ -82,7 +101,7 @@ def enviar_correo_iconcreta(name, email, telefono, convertir_rango_precio_a_text
 # Función para obtener los productos activos en Iconcreta provenientes de un webservice
 def obtener_productos_activos(url_cliente, proyecto):
     ruta_archivo_configuracion = seleccionar_ruta_configuracion(url_cliente, proyecto)
-    parametros_archivo_configuracion = leer_archivo_configuracion(ruta_archivo=ruta_archivo_configuracion)  # Pasamos ruta_archivo_configuracion como ruta_archivo
+    parametros_archivo_configuracion = leer_archivo_configuracion(ruta_archivo=ruta_archivo_configuracion)
 
     print(f"Parámetros archivo configuración: {parametros_archivo_configuracion}")  # Depuración
 
@@ -104,6 +123,11 @@ def obtener_productos_activos(url_cliente, proyecto):
         productos = []
         for producto in root.findall('.//Producto'):
             try:
+                # Filtro basado en la etiqueta <disponibleChatbot>
+                disponible_chatbot = producto.find('disponibleChatbot').text.strip().lower() == "si"
+                if not disponible_chatbot:
+                    continue  # Omite productos que no estén disponibles para el chatbot
+                
                 nombre_producto = producto.find('Nombre').text.strip()
                 precio_producto = float(producto.find('PrecioTotalUF').text.strip())
 
@@ -119,7 +143,8 @@ def obtener_productos_activos(url_cliente, proyecto):
                     'NombreProyecto': producto.find('NombreProyecto').text.strip(),
                     'Dormitorios': dormitorios_producto,
                     'Banos': banos_producto,
-                    'URLPlanoComercial': url_plano_comercial
+                    'URLPlanoComercial': url_plano_comercial,
+                    'DisponibleChatbot': disponible_chatbot
                 }
                 productos.append(datos_producto)
             except Exception as e:
@@ -164,3 +189,18 @@ def obtener_producto_mas_barato(productos):
 def quitar_acentos(texto):
     texto_sin_acentos = ''.join((c for c in unicodedata.normalize('NFD', texto) if unicodedata.category(c) != 'Mn'))
     return texto_sin_acentos
+
+# Lista de dominios donde no se debe mostrar la opción de "reclamo"
+def obtener_dominios_sin_reclamo():
+    """
+    Retorna la lista de dominios donde no se debe mostrar la opción de "reclamo".
+    """
+    return [
+        "desarrollos.want.cl",
+        "vimac.cl",
+        "www.vimac.cl",
+        "ivmc.cl",
+        "www.ivmc.cl",
+        "localhost",
+        # Añadir más dominios según sea necesario
+    ]
