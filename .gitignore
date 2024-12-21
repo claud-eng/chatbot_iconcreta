@@ -1,8 +1,8 @@
-# Ignorar la carpeta .vs
-.vs/
-
 # Ignorar el archivo .env
 .env
+
+# Ignorar la carpeta .vs
+.vs/
 
 # Ignorar la carpeta App_Data
 App_Data/
